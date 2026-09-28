@@ -1,0 +1,37 @@
+name: Build SmoothMotionHost
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main, master ]
+
+jobs:
+  build:
+    runs-on: windows-2022
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure
+        shell: cmd
+        run: cmake -S . -B build -G "Visual Studio 17 2022" -A x64
+
+      - name: Build Release
+        shell: cmd
+        run: cmake --build build --config Release
+
+      - name: Stage artifact
+        shell: powershell
+        run: |
+          New-Item -ItemType Directory -Force -Path artifact | Out-Null
+          Copy-Item build/Release/SmoothMotionHost.exe artifact/
+          Copy-Item run_without_sm86.cmd artifact/
+          Copy-Item launch_with_sm86.cmd artifact/
+          Copy-Item README.md artifact/
+
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: SmoothMotionHost-v0.3
+          path: artifact/
